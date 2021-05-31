@@ -1,11 +1,13 @@
 require("dotenv").config();
+require("./helpers/initMongodb");
 const express = require("express");
 const morgan = require("morgan");
 const createError = require("http-errors");
 const authRouter = require("./routes/auth");
 
-// app setup and  middlewares
+/* App setup */
 const app = express();
+app.use(express.json());
 app.use(morgan("dev"));
 
 /* Routes */
@@ -16,12 +18,15 @@ app.use((req, res, next) => {
   next(createError.NotFound());
 });
 app.use((err, _, res, next) => {
-  const status = err.status || 500;
+  let message = status === 500 ? "Internal server error" : err.message;
+  let status = err.status || 500;
+  if (err.isJoi) status = 422;
+
   res.status(status);
   res.json({
     error: {
-      status: status,
-      message: err.message,
+      status,
+      message,
     },
   });
   next();
@@ -32,4 +37,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
