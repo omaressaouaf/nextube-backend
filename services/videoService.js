@@ -3,7 +3,9 @@ const uploadSchema = require("../validation/uploadSchema");
 const createError = require("http-errors");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
+const ffprobePath = require('@ffprobe-installer/ffprobe').path;
 ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfprobePath(ffprobePath);
 
 const videoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -39,11 +41,11 @@ const generateAndSaveThumbnail = filePath => {
     let thumbnail = "";
     ffmpeg(filePath)
       .on("filenames", filenames => {
-        thumbnail = `${process.env.APP_URL}/uploads/thumbnails/${filenames[0]}`;
+        thumbnail = `${process.env.APP_URL}/uploads/thumbnails/${filenames[2]}`;
       })
       .on("end", () => resolve(thumbnail))
       .on("error", err => reject(createError.InternalServerError()))
-      .takeScreenshots({ filename: Date.now() + "thumbnail.jpg", timemarks: [1] }, "uploads/thumbnails/");
+      .takeScreenshots({ filename: Date.now() + "thumbnail.jpg", count: [3] }, "uploads/thumbnails/");
   });
 };
 
