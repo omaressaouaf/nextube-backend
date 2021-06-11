@@ -17,6 +17,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    avatar : {
+      type : String ,
+      required : false,
+      default : "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"
+    },
     refreshToken: {
       type: String,
       required: false,

@@ -10,7 +10,7 @@ const register = async (req, res, next) => {
 
     const user = new User({ channelName, email, password });
     await user.save();
-    res.json({ user });
+    return res.json({ user });
   } catch (err) {
     next(err);
   }
@@ -21,13 +21,13 @@ const login = async (req, res, next) => {
     const { email, password } = req.body;
 
     const user = await authService.attemptLogin(email, password);
-    
+
     const accessToken = await authService.createAccessToken(user);
     const refreshToken = await authService.createRefreshToken(user);
 
-    authService.setRefreshTokenCookie(res , refreshToken)
+    authService.setRefreshTokenCookie(res, refreshToken);
 
-    res.json({ accessToken , user });
+    return res.json({ accessToken, accessTokenEndDate : Date.now() + authService.accessTokenLifeTime, user });
   } catch (err) {
     next(err);
   }
@@ -36,14 +36,14 @@ const login = async (req, res, next) => {
 const logout = async (req, res, next) => {
   try {
     const { refreshToken } = req.cookies;
-    if (!refreshToken) throw createError.BadRequest();
+    if (!refreshToken) throw createError.BadRequest("Missing refresh token");
 
     const user = await authService.verifyRefreshToken(refreshToken);
 
     await User.findByIdAndUpdate(user.id, { refreshToken: null });
-    authService.setRefreshTokenCookie(res , '' , 0)
+    authService.setRefreshTokenCookie(res, "", 0);
 
-    res.sendStatus(204);
+    return res.sendStatus(204);
   } catch (err) {
     next(err);
   }
@@ -59,9 +59,9 @@ const refreshToken = async (req, res, next) => {
     const newAccessToken = await authService.createAccessToken(user);
     const newRefreshToken = await authService.createRefreshToken(user);
 
-    authService.setRefreshTokenCookie(res , newRefreshToken)
+    authService.setRefreshTokenCookie(res, newRefreshToken);
 
-    res.json({ accessToken: newAccessToken, user });
+    return res.json({ accessToken: newAccessToken, accessTokenEndDate : Date.now() + authService.accessTokenLifeTime, user });
   } catch (err) {
     next(err);
   }

@@ -2,23 +2,34 @@ require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const createError = require("http-errors");
 const authRouter = require("./routes/auth");
+const videosRouter = require("./routes/videos");
 const initMongodb = require("./helpers/db");
 const checkAuth = require("./middlewares/checkAuth");
 
 /* App setup */
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static("uploads"));
 app.use(morgan("dev"));
 app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 initMongodb();
 
 /* Routes */
 app.use("/auth", authRouter);
-app.get('/' , checkAuth  , (req , res) => {
-  return res.json({refreshtoken : req.cookies['jid']})
-})
+app.use("/videos", videosRouter);
+app.get("/", checkAuth, (req, res) => {
+  return res.json({ refreshtoken: req.cookies["jid"] });
+});
 
 /* Catch middlewares for all routes  (Error handling) */
 app.use((req, res, next) => {
@@ -32,12 +43,7 @@ app.use((err, _, res, next) => {
   let message = status === 500 ? "Internal server error" : err.message;
 
   res.status(status);
-  res.json({
-    error: {
-      status,
-      message,
-    },
-  });
+  res.send({ message });
   next();
 });
 
