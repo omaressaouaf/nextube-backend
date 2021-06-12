@@ -38,9 +38,15 @@ app.use((req, res, next) => {
 app.use((err, _, res, next) => {
   console.log(err.message);
 
-  let status = err.status || 500;
+  let status = err.status;
+
+  if (!err.status) status = 500;
   if (err.isJoi) status = 422;
-  let message = status === 500 ? "Internal server error" : err.message;
+  if (err.kind === "ObjectId") status = 404;
+
+  let message = err.message;
+  if (status === 500) message = "Internal Server Error";
+  if (status === 404) message = "Not Found";
 
   res.status(status);
   res.send({ message });

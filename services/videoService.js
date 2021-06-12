@@ -3,7 +3,7 @@ const uploadSchema = require("../validation/uploadSchema");
 const createError = require("http-errors");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
-const ffprobePath = require('@ffprobe-installer/ffprobe').path;
+const ffprobePath = require("@ffprobe-installer/ffprobe").path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
@@ -25,7 +25,7 @@ const videoFilter = async (req, file, cb) => {
   }
 };
 
-const uploadVideo = multer({ storage: videoStorage, fileFilter: videoFilter, limits: { fileSize: 1024 * 1024 * 11 } }).single("file");
+const uploadVideo = multer({ storage: videoStorage, fileFilter: videoFilter, limits: { fileSize: 1024 * 1024 * 1000 } }).single("file");
 
 const handleUploadVideoErrors = err => {
   if (err instanceof multer.MulterError) {
@@ -41,11 +41,18 @@ const generateAndSaveThumbnail = filePath => {
     let thumbnail = "";
     ffmpeg(filePath)
       .on("filenames", filenames => {
-        thumbnail = `${process.env.APP_URL}/uploads/thumbnails/${filenames[2]}`;
+        thumbnail = `${process.env.APP_URL}/uploads/thumbnails/${filenames[0]}`;
       })
       .on("end", () => resolve(thumbnail))
       .on("error", err => reject(createError.InternalServerError()))
-      .takeScreenshots({ filename: Date.now() + "thumbnail.jpg", count: [3] }, "uploads/thumbnails/");
+      .takeScreenshots(
+        {
+          filename: Date.now() + "thumbnail.jpg",
+          count: [1],
+          timemarks: ['50%'],
+        },
+        "uploads/thumbnails/"
+      );
   });
 };
 
