@@ -18,7 +18,23 @@ const show = async (req, res, next) => {
     const video = await Video.findById(req.params.id).populate("user");
     if (!video) throw createError.NotFound();
 
+    video.viewsCount += 1;
+    await video.save();
+    
     return res.json({ video });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getSuggestions = async (req, res, next) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video) throw createError.NotFound();
+
+    const suggestions = await Video.find({ $text: { $search: video.tags }, _id: { $ne: video.id } }).populate("user");
+
+    return res.json({ suggestions });
   } catch (err) {
     next(err);
   }
@@ -92,4 +108,4 @@ const upload = async (req, res, next) => {
   });
 };
 
-module.exports = { index, show, stream, upload };
+module.exports = { index, show, getSuggestions, stream, upload };

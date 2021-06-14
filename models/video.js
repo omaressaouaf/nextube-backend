@@ -23,6 +23,12 @@ const videoSchema = new Schema(
       type: String,
       required: true,
     },
+    viewsCount: {
+      type: Number,
+      required: true,
+      min: 0,
+      default : 0,
+    },
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -38,6 +44,8 @@ videoSchema.set("toJSON", {
     delete ret._id;
   },
 });
+
+videoSchema.index({ title: "text", tags: "text", description: "text" });
 
 const Video = mongoose.model("Video", videoSchema);
 
