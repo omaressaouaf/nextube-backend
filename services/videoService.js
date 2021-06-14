@@ -6,6 +6,8 @@ const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const ffprobePath = require("@ffprobe-installer/ffprobe").path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
+const mongoose = require("mongoose");
+const Video = require("../models/video");
 
 const videoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -49,11 +51,51 @@ const generateAndSaveThumbnail = filePath => {
         {
           filename: Date.now() + "thumbnail.jpg",
           count: [1],
-          timemarks: ['50%'],
+          timemarks: ["50%"],
         },
         "uploads/thumbnails/"
       );
   });
 };
 
-module.exports = { uploadVideo, handleUploadVideoErrors, generateAndSaveThumbnail };
+const toggleFeeling = ({ videoId, authUser, collection, model }) => {
+  return new Promise(async (resolve, reject) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const video = await Video.findById(videoId).populate({ path: collection, model });
+      if (!video) resolve(createError.NotFound());
+
+      if (video[collection].length) {
+        // Remove feeling
+        const deletedFeeling = await model.findOneAndDelete({ user: authUser.id }, { session });
+        video[collection] = video[collection].filter(feeling => feeling.id !== deletedFeeling.id);
+      } else {
+        //Add feeling
+        const newFeeling = await model.create(
+          [
+            {
+              user: authUser.id,
+              video: video.id,
+            },
+          ],
+          { session }
+        );
+        video[collection].push(newFeeling[0]);
+      }
+      await video.save({ session });
+
+      await session.commitTransaction();
+
+      session.endSession();
+      resolve();
+    } catch (err) {
+      await session.abortTransaction();
+      session.endSession();
+      console.log(err);
+      reject(createError.InternalServerError());
+    }
+  });
+};
+
+module.exports = { uploadVideo, handleUploadVideoErrors, generateAndSaveThumbnail, toggleFeeling };

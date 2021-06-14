@@ -2,6 +2,8 @@ const createError = require("http-errors");
 const Video = require("../models/video");
 const videoService = require("../services/videoService");
 const fs = require("fs");
+const Like = require("../models/like");
+const Dislike = require("../models/dislike");
 
 const index = async (req, res, next) => {
   try {
@@ -15,12 +17,12 @@ const index = async (req, res, next) => {
 
 const show = async (req, res, next) => {
   try {
-    const video = await Video.findById(req.params.id).populate("user");
+    const video = await Video.findById(req.params.videoId).populate("user");
     if (!video) throw createError.NotFound();
 
     video.viewsCount += 1;
     await video.save();
-    
+
     return res.json({ video });
   } catch (err) {
     next(err);
@@ -29,7 +31,7 @@ const show = async (req, res, next) => {
 
 const getSuggestions = async (req, res, next) => {
   try {
-    const video = await Video.findById(req.params.id);
+    const video = await Video.findById(req.params.videoId);
     if (!video) throw createError.NotFound();
 
     const suggestions = await Video.find({ $text: { $search: video.tags }, _id: { $ne: video.id } }).populate("user");
@@ -63,12 +65,13 @@ const stream = async (req, res, next) => {
     const chunkSize = 1024 * 1024 * 10; // about 10MB
     const start = Number(range.replace(/bytes=/, "").split("-")[0]);
     const end = Math.min(start + chunkSize, fileSize - 1);
+    const contentLength = end - start + 1;
 
     //proper headers
     const head = {
       "Content-Range": `bytes ${start}-${end}/${fileSize}`,
       "Accept-Ranges": "bytes",
-      "Content-Length": chunkSize,
+      "Content-Length": contentLength,
       "Content-Type": "video/mp4",
     };
 
@@ -76,6 +79,24 @@ const stream = async (req, res, next) => {
     const fileStream = fs.createReadStream(path, { start, end });
     res.writeHead(206, head);
     fileStream.pipe(res);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const toggleLike = async (req, res, next) => {
+  try {
+    await videoService.toggleFeeling({ videoId: req.params.videoId, authUser: req.user, collection: "likes", model: Like });
+    return res.sendStatus(200);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const toggleDislike = async (req, res, next) => {
+  try {
+    await videoService.toggleFeeling({ videoId: req.params.videoId, authUser: req.user, collection: "dislikes", model: Dislike });
+    return res.sendStatus(200);
   } catch (err) {
     next(err);
   }
@@ -101,11 +122,11 @@ const upload = async (req, res, next) => {
         user: req.user.id,
       });
 
-      return res.json({ video });
+      return res.status(201).json({ video });
     } catch (err) {
       next(err);
     }
   });
 };
 
-module.exports = { index, show, getSuggestions, stream, upload };
+module.exports = { index, show, toggleLike, toggleDislike, getSuggestions, stream, upload };
