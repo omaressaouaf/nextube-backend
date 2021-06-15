@@ -1,13 +1,25 @@
-const router = require("express").Router();
-const { index, show, getSuggestions, stream, toggleLike, upload, toggleDislike } = require("../controllers/videoController");
+const videosRouter = require("express").Router();
+const { index, show, getSuggestions, toggleLike, upload, toggleDislike } = require("../controllers/videoController");
+const streamController = require("../controllers/streamController");
 const checkAuth = require("../middlewares/checkAuth");
+const checkVideoId = require("../middlewares/checkVideoId");
+const commentsRouter = require("./comments");
+// Public
+videosRouter.get("/", index);
+videosRouter.get("/stream/:filename", streamController.index);
 
-router.get("/", index);
-router.get("/:videoId", show);
-router.get("/:videoId/suggestions", getSuggestions);
-router.get("/stream/:filename", stream);
-router.put("/:videoId/togglelike", checkAuth, toggleLike);
-router.put("/:videoId/toggledislike", checkAuth, toggleDislike);
-router.post("/upload", checkAuth, upload);
+//Auth
+videosRouter.post("/upload", checkAuth, upload);
 
-module.exports = router;
+// Video specific
+videosRouter.use("/:videoId", checkVideoId);
+videosRouter.get("/:videoId", show);
+videosRouter.use("/:videoId/comments", commentsRouter);
+videosRouter.get("/:videoId/suggestions", getSuggestions);
+
+//Auth & Video specific
+videosRouter.use("/:videoId", checkAuth);
+videosRouter.put("/:videoId/togglelike", toggleLike);
+videosRouter.put("/:videoId/toggledislike", toggleDislike);
+
+module.exports = videosRouter;

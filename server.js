@@ -3,11 +3,11 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const initMongodb = require("./helpers/db");
 const createError = require("http-errors");
 const authRouter = require("./routes/auth");
 const videosRouter = require("./routes/videos");
-const initMongodb = require("./helpers/db");
-const checkAuth = require("./middlewares/checkAuth");
+const commentsRouter = require("./routes/comments");
 
 /* App setup */
 const app = express();
@@ -27,9 +27,6 @@ initMongodb();
 /* Routes */
 app.use("/auth", authRouter);
 app.use("/videos", videosRouter);
-app.get("/", checkAuth, (req, res) => {
-  return res.json({ refreshtoken: req.cookies["jid"] });
-});
 
 /* Catch middlewares for all routes  (Error handling) */
 app.use((req, res, next) => {

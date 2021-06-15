@@ -23,9 +23,9 @@ const createAccessToken = user => {
     jwt.sign(user.toJSON(), process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" }, (err, token) => {
       if (err) {
         console.log(err.message);
-        reject(createError.InternalServerError());
+        return reject(createError.InternalServerError());
       }
-      resolve(token);
+      return resolve(token);
     });
   });
 };
@@ -35,7 +35,7 @@ const verifyAccessToken = accessToken => {
     jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, async (err, payload) => {
       if (err) {
         console.log(err.message);
-        reject(createError.Unauthorized(err.name === "TokenExpiredError" ? 'access token expired' : "Unauthorized"));
+        return reject(createError.Unauthorized(err.name === "TokenExpiredError" ? 'access token expired' : "Unauthorized"));
       }
       const { iat, exp, ...user } = payload;
       return resolve(user);
@@ -48,11 +48,11 @@ const createRefreshToken = user => {
     jwt.sign(user.toJSON(), process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" }, async (err, token) => {
       if (err) {
         console.log(err.message);
-        reject(createError.InternalServerError());
+        return reject(createError.InternalServerError());
       }
       await User.findByIdAndUpdate(user.id, { refreshToken: token });
 
-      resolve(token);
+      return resolve(token);
     });
   });
 };
@@ -62,7 +62,7 @@ const verifyRefreshToken = refreshToken => {
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, payload) => {
       if (err) {
         console.log(err.message);
-        reject(createError.Unauthorized(err.name === "TokenExpiredError" ? 'refresh token expired' : "Unauthorized"));
+        return reject(createError.Unauthorized(err.name === "TokenExpiredError" ? 'refresh token expired' : "Unauthorized"));
       }
       const user = await User.findById(payload.id);
       if (user.refreshToken !== refreshToken) reject(createError.Unauthorized());
