@@ -2,8 +2,7 @@ const createError = require("http-errors");
 const Video = require("../models/video");
 const videoService = require("../services/videoService");
 const fs = require("fs");
-const Like = require("../models/like");
-const Dislike = require("../models/dislike");
+
 
 const index = async (req, res, next) => {
   try {
@@ -17,7 +16,7 @@ const index = async (req, res, next) => {
 
 const show = async (req, res, next) => {
   try {
-    const video = await Video.findById(req.params.videoId).populate("user");
+    const video = await Video.findById(req.params.videoId).populate("user")
     if (!video) throw createError.NotFound();
 
     video.viewsCount += 1;
@@ -86,7 +85,8 @@ const stream = async (req, res, next) => {
 
 const toggleLike = async (req, res, next) => {
   try {
-    await videoService.toggleFeeling({ videoId: req.params.videoId, authUser: req.user, collection: "likes", model: Like });
+    await videoService.toggleFeeling({ videoId: req.params.videoId, authUser: req.user, feelings: "likes" });
+
     return res.sendStatus(200);
   } catch (err) {
     next(err);
@@ -95,7 +95,8 @@ const toggleLike = async (req, res, next) => {
 
 const toggleDislike = async (req, res, next) => {
   try {
-    await videoService.toggleFeeling({ videoId: req.params.videoId, authUser: req.user, collection: "dislikes", model: Dislike });
+    await videoService.toggleFeeling({ videoId: req.params.videoId, authUser: req.user, feelings: "dislikes" });
+
     return res.sendStatus(200);
   } catch (err) {
     next(err);

@@ -8,6 +8,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 const mongoose = require("mongoose");
 const Video = require("../models/video");
+const { db } = require("../models/video");
 
 const videoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -58,40 +59,25 @@ const generateAndSaveThumbnail = filePath => {
   });
 };
 
-const toggleFeeling = ({ videoId, authUser, collection, model }) => {
+const toggleFeeling = ({ videoId, authUser, feelings }) => {
   return new Promise(async (resolve, reject) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
     try {
-      const video = await Video.findById(videoId).populate({ path: collection, model });
-      if (!video) resolve(createError.NotFound());
+      if (feelings !== "likes" && feelings !== "dislikes") console.error("feelings must be likes or dislikes");
 
-      if (video[collection].length) {
-        // Remove feeling
-        const deletedFeeling = await model.findOneAndDelete({ user: authUser.id }, { session });
-        video[collection] = video[collection].filter(feeling => feeling.id !== deletedFeeling.id);
+      const oppositeFeelings = feelings === "likes" ? "dislikes" : "likes";
+
+      const video = await Video.findById(videoId);
+      if (video[feelings].includes(authUser.id)) {
+        video[feelings] = video[feelings].filter(userId => userId != authUser.id);
       } else {
-        //Add feeling
-        const newFeeling = await model.create(
-          [
-            {
-              user: authUser.id,
-              video: video.id,
-            },
-          ],
-          { session }
-        );
-        video[collection].push(newFeeling[0]);
+        if (video[oppositeFeelings].includes(authUser.id)) {
+          video[oppositeFeelings] = video[oppositeFeelings].filter(userId => userId != authUser.id);
+        }
+        video[feelings].addToSet(authUser.id);
       }
-      await video.save({ session });
-
-      await session.commitTransaction();
-
-      session.endSession();
+      await video.save();
       resolve();
     } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
       console.log(err);
       reject(createError.InternalServerError());
     }
