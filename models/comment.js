@@ -15,7 +15,7 @@ const commentSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Video",
     },
-    replies: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
+    repliedTo : {type : Schema.Types.ObjectId , ref :'Comment' }
   },
   { timestamps: true }
 );

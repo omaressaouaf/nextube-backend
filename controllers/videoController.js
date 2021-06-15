@@ -41,7 +41,7 @@ module.exports = {
     try {
       await videoService.toggleFeeling({ videoId: req.video.id, authUser: req.user, feelings: "likes" });
 
-      return res.sendStatus(200);
+      return res.sendStatus(204);
     } catch (err) {
       next(err);
     }
@@ -51,7 +51,7 @@ module.exports = {
     try {
       await videoService.toggleFeeling({ videoId: req.video.id, authUser: req.user, feelings: "dislikes" });
 
-      return res.sendStatus(200);
+      return res.sendStatus(204);
     } catch (err) {
       next(err);
     }
