@@ -52,11 +52,13 @@ module.exports = {
     try {
       const { content } = await storeCommentSchema.validateAsync(req.body);
 
-      const comment = await Comment.findById(req.params.commentId);
+      const comment = await Comment.findById(req.params.commentId).populate("user");
       if (!comment) throw createError.NotFound();
 
+      if (comment.user.id != req.user.id) throw createError.Forbidden();
+
       comment.content = content;
-      await comment.save()
+      await comment.save();
 
       return res.json({ comment });
     } catch (err) {
