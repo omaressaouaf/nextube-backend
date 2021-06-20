@@ -28,7 +28,7 @@ const videoFilter = async (req, file, cb) => {
   }
 };
 
-const uploadVideo = multer({ storage: videoStorage, fileFilter: videoFilter, limits: { fileSize: 1024 * 1024 * 10 } }).single("file");
+const uploadVideo = multer({ storage: videoStorage, fileFilter: videoFilter, limits: { fileSize: 1024 * 1024 * 11 } }).single("file");
 
 const handleUploadVideoErrors = err => {
   if (err instanceof multer.MulterError) {

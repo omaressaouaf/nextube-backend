@@ -15,10 +15,17 @@ const commentSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Video",
     },
-    repliedTo : {type : Schema.Types.ObjectId , ref :'Comment' }
+    parentComment: { type: Schema.Types.ObjectId, ref: "Comment", required: false, default: null },
   },
   { timestamps: true }
 );
+
+commentSchema.virtual("repliesCount", {
+  ref: "Comment",
+  localField: "_id",
+  foreignField: "parentComment",
+  count: true,
+});
 
 commentSchema.set("toJSON", {
   virtuals: true,

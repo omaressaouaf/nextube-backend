@@ -6,7 +6,10 @@ const { db } = require("../models/comment");
 module.exports = {
   index: async (req, res, next) => {
     try {
-      const comments = await Comment.find({ video: req.params.videoId });
+      const comments = await Comment.find({ video: req.params.videoId, parentComment: null })
+        .populate("user")
+        .populate("repliesCount")
+        .sort({ createdAt: "desc" });
 
       res.json({ comments });
     } catch (err) {
@@ -18,7 +21,9 @@ module.exports = {
       const parentComment = await Comment.findById(req.params.commentId);
       if (!parentComment) throw createError.NotFound();
 
-      const replies = await Comment.find({ repliedTo: parentComment.id });
+      const replies = await Comment.find({ parentComment: parentComment.id })
+        .populate("user")
+        .populate("repliesCount");
 
       return res.json({ replies });
     } catch (err) {
@@ -28,10 +33,10 @@ module.exports = {
 
   store: async (req, res, next) => {
     try {
-      const { content, repliedTo } = await storeCommentSchema.validateAsync(req.body);
+      const { content, parentCommentId } = await storeCommentSchema.validateAsync(req.body);
 
-      if (repliedTo) {
-        const parentComment = await Comment.findById(repliedTo);
+      if (parentCommentId) {
+        const parentComment = await Comment.findById(parentCommentId);
         if (!parentComment) throw createError.NotFound();
       }
 
@@ -39,9 +44,9 @@ module.exports = {
         content,
         user: req.user.id,
         video: req.video.id,
-        repliedTo,
+        parentComment: parentCommentId,
       });
-
+      await newComment.populate("user").populate("repliesCount").execPopulate();
       return res.json({ newComment });
     } catch (err) {
       next(err);
@@ -60,7 +65,7 @@ module.exports = {
       comment.content = content;
       await comment.save();
 
-      return res.json({ comment });
+      return res.json({ updatedComment: comment });
     } catch (err) {
       next(err);
     }
@@ -74,7 +79,7 @@ module.exports = {
       if (comment.user.id != req.user.id) throw createError.Forbidden();
 
       db.transaction(async session => {
-        await Comment.deleteMany({ repliedTo: comment.id }, { session });
+        await Comment.deleteMany({ parentComment: comment.id }, { session });
 
         await comment.delete({ session });
       });

@@ -2,7 +2,7 @@ const joi = require("joi");
 
 const storeCommentSchema = joi.object({
   content: joi.string().required(),
-  repliedTo : joi.string()
+  parentCommentId : joi.string()
 });
 
 module.exports = storeCommentSchema;

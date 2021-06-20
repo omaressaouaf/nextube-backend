@@ -49,6 +49,14 @@ videoSchema.set("toJSON", {
 
 videoSchema.index({ title: "text", tags: "text", description: "text" });
 
+const populateUser = function (next) {
+  this.populate("user");
+  next();
+};
+
+videoSchema.pre("findOne" , populateUser);
+videoSchema.pre("find" , populateUser);
+
 const Video = mongoose.model("Video", videoSchema);
 
 module.exports = Video;

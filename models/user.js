@@ -40,6 +40,14 @@ userSchema.pre("save", async function (next) {
   }
 });
 
+userSchema.virtual('subscribersCount' , {
+  ref : "Subscription",
+  localField : "_id",
+  foreignField : "subscribedTo",
+  count : true
+})
+
+
 userSchema.set("toJSON", {
   virtuals: true,
   versionKey: false,
@@ -49,6 +57,7 @@ userSchema.set("toJSON", {
     delete ret.refreshToken;
   },
 });
+
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;
