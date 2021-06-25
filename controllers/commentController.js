@@ -47,7 +47,7 @@ module.exports = {
         parentComment: parentCommentId,
       });
       await newComment.populate("user").populate("repliesCount").execPopulate();
-      return res.json({ newComment });
+      return res.status(201).json({ newComment });
     } catch (err) {
       next(err);
     }

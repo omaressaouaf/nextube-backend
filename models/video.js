@@ -50,12 +50,16 @@ videoSchema.set("toJSON", {
 videoSchema.index({ title: "text", tags: "text", description: "text" });
 
 const populateUser = function (next) {
-  this.populate("user");
-  next();
+  try {
+    this.populate("user");
+    next();
+  } catch (err) {
+    console.log(`error populating user in video model : ${err}`);
+  }
 };
 
-videoSchema.pre("findOne" , populateUser);
-videoSchema.pre("find" , populateUser);
+videoSchema.pre("findOne", populateUser);
+videoSchema.pre("find", populateUser);
 
 const Video = mongoose.model("Video", videoSchema);
 

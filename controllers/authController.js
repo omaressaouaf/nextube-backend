@@ -2,6 +2,7 @@ const createError = require("http-errors");
 const User = require("../models/User");
 const registerSchema = require("../validation/registerSchema");
 const authService = require("../services/authService");
+const Subscription = require("../models/subscription");
 
 module.exports = {
   register: async (req, res, next) => {
@@ -21,14 +22,22 @@ module.exports = {
     try {
       const { email, password } = req.body;
 
-      const user = await authService.attemptLogin(email, password);
+      let user = await authService.attemptLogin(email, password);
+      user = user.toJSON();
 
       const accessToken = await authService.createAccessToken(user);
       const refreshToken = await authService.createRefreshToken(user);
-
       authService.setRefreshTokenCookie(res, refreshToken);
 
-      return res.json({ accessToken, accessTokenEndDate: Date.now() + authService.accessTokenLifeTime, user });
+      user.subscriptions = await Subscription.find({ subscriber: user.id }).populate(
+        "subscribedTo"
+      );
+
+      return res.json({
+        accessToken,
+        accessTokenEndDate: Date.now() + authService.accessTokenLifeTime,
+        user,
+      });
     } catch (err) {
       next(err);
     }
@@ -59,10 +68,16 @@ module.exports = {
 
       const newAccessToken = await authService.createAccessToken(user);
       const newRefreshToken = await authService.createRefreshToken(user);
-
       authService.setRefreshTokenCookie(res, newRefreshToken);
 
-      return res.json({ accessToken: newAccessToken, accessTokenEndDate: Date.now() + authService.accessTokenLifeTime, user });
+      user.subscriptions = await Subscription.find({ subscriber: user.id }).populate(
+        "subscribedTo"
+      );
+      return res.json({
+        accessToken: newAccessToken,
+        accessTokenEndDate: Date.now() + authService.accessTokenLifeTime,
+        user,
+      });
     } catch (err) {
       next(err);
     }

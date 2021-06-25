@@ -4,7 +4,7 @@ const videoService = require("../services/videoService");
 module.exports = {
   index: async (req, res, next) => {
     try {
-      const videos = await Video.find().sort({ createdAt: "desc" }).populate("user");
+      const videos = await Video.find().sort({ createdAt: "desc" });
 
       return res.json({ videos });
     } catch (err) {
@@ -19,6 +19,7 @@ module.exports = {
       video.viewsCount += 1;
       await video.save();
 
+      await video.populate({ path: "user", populate: { path: "subscribersCount" } }).execPopulate();
       return res.json({ video });
     } catch (err) {
       next(err);
@@ -29,7 +30,10 @@ module.exports = {
     try {
       const video = req.video;
 
-      const suggestions = await Video.find({ $text: { $search: video.tags }, _id: { $ne: video.id } }).populate("user");
+      const suggestions = await Video.find({
+        $text: { $search: video.tags },
+        _id: { $ne: video.id },
+      }).populate("user");
 
       return res.json({ suggestions });
     } catch (err) {
@@ -39,7 +43,11 @@ module.exports = {
 
   toggleLike: async (req, res, next) => {
     try {
-      await videoService.toggleFeeling({ videoId: req.video.id, authUser: req.user, feelings: "likes" });
+      await videoService.toggleFeeling({
+        videoId: req.video.id,
+        authUser: req.user,
+        feelings: "likes",
+      });
 
       return res.sendStatus(204);
     } catch (err) {
@@ -49,7 +57,11 @@ module.exports = {
 
   toggleDislike: async (req, res, next) => {
     try {
-      await videoService.toggleFeeling({ videoId: req.video.id, authUser: req.user, feelings: "dislikes" });
+      await videoService.toggleFeeling({
+        videoId: req.video.id,
+        authUser: req.user,
+        feelings: "dislikes",
+      });
 
       return res.sendStatus(204);
     } catch (err) {

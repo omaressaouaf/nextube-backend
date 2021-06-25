@@ -1,10 +1,15 @@
 const subscriptionsRouter = require("express").Router();
-const { getSubscriptions,getSubscriptionsVideos, subscribe, unsubscribe } = require("../controllers/subscriptionController");
-const checkAuth = require("../middlewares/checkAuth");
+const {
+  getSubscriptions,
+  getSubscriptionsWithVideos,
+  subscribe,
+  unsubscribe,
+} = require("../controllers/subscriptionController");
 
-subscriptionsRouter.get("/", checkAuth, getSubscriptions);
-subscriptionsRouter.get("/videos", checkAuth, getSubscriptionsVideos);
-subscriptionsRouter.put("/subscribe/:userId", checkAuth, subscribe);
-subscriptionsRouter.put("/unsubscribe/:userId", checkAuth, unsubscribe);
+
+subscriptionsRouter.get("/", getSubscriptions);
+subscriptionsRouter.get("/videos", getSubscriptionsWithVideos);
+subscriptionsRouter.post("/subscribe/:userId", subscribe);
+subscriptionsRouter.delete("/unsubscribe/:userId", unsubscribe);
 
 module.exports = subscriptionsRouter;

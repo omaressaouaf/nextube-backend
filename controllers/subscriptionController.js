@@ -15,16 +15,30 @@ module.exports = {
       next(err);
     }
   },
-  getSubscriptionsVideos: async (req, res, next) => {
+  getSubscriptionsWithVideos: async (req, res, next) => {
     try {
-      const subscriptions = await Subscription.find({ subscriber: req.user.id }).select(
-        "subscribedTo"
-      );
+      const subscriptions = await Subscription.find({ subscriber: req.user.id });
       const subscribedToArray = subscriptions.map(subscription => subscription.subscribedTo);
 
-      const subscriptionsVideos = await Video.find({ user: { $in: subscribedToArray } })
+      const subscriptionsWithVideos = await Video.aggregate([
+        { $sort: { createdAt: 1 } },
+        { $match: { user: { $in: subscribedToArray } } },
+        {
+          $group: {
+            _id: "$user",
+            videos: { $push: "$$ROOT" },
+          },
+        },
+        { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
+        { $limit: 10 },
+        { $unwind: "$user" },
+        // Modify the videos array to contain only 1 . and modify the user from an array to an object
+        {
+          $project: { videos: { $slice: ["$videos", 1] }, user: "$user" },
+        },
+      ]);
 
-      return res.json({ subscriptionsVideos });
+      return res.json({ subscriptionsWithVideos });
     } catch (err) {
       next(err);
     }
@@ -42,6 +56,8 @@ module.exports = {
         subscriber: req.user.id,
         subscribedTo: subscribedTo.id,
       });
+
+      await newSubscription.populate("subscribedTo").execPopulate();
 
       return res.status(201).json({ newSubscription });
     } catch (err) {

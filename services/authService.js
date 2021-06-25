@@ -3,7 +3,6 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-
 const accessTokenLifeTime = 1000 * 60 * 15;
 const refreshTokenLifeTime = 1000 * 60 * 60 * 24 * 7;
 
@@ -20,7 +19,7 @@ const attemptLogin = async (email, password) => {
 
 const createAccessToken = user => {
   return new Promise((resolve, reject) => {
-    jwt.sign(user.toJSON(), process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" }, (err, token) => {
+    jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" }, (err, token) => {
       if (err) {
         console.log(err.message);
         return reject(createError.InternalServerError());
@@ -35,7 +34,11 @@ const verifyAccessToken = accessToken => {
     jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, async (err, payload) => {
       if (err) {
         console.log(err.message);
-        return reject(createError.Unauthorized(err.name === "TokenExpiredError" ? 'access token expired' : "Unauthorized"));
+        return reject(
+          createError.Unauthorized(
+            err.name === "TokenExpiredError" ? "access token expired" : "Unauthorized"
+          )
+        );
       }
       const { iat, exp, ...user } = payload;
       return resolve(user);
@@ -45,14 +48,16 @@ const verifyAccessToken = accessToken => {
 
 const createRefreshToken = user => {
   return new Promise((resolve, reject) => {
-    jwt.sign(user.toJSON(), process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" }, async (err, token) => {
+    jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" }, async (err, token) => {
       if (err) {
         console.log(err.message);
         return reject(createError.InternalServerError());
       }
-      await User.findByIdAndUpdate(user.id, { refreshToken: token });
+      User.findByIdAndUpdate(user.id, { refreshToken: token }, err => {
+        if (err) return reject(createError.InternalServerError());
 
-      return resolve(token);
+        return resolve(token);
+      });
     });
   });
 };
@@ -62,23 +67,27 @@ const verifyRefreshToken = refreshToken => {
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, payload) => {
       if (err) {
         console.log(err.message);
-        return reject(createError.Unauthorized(err.name === "TokenExpiredError" ? 'refresh token expired' : "Unauthorized"));
+        return reject(
+          createError.Unauthorized(
+            err.name === "TokenExpiredError" ? "refresh token expired" : "Unauthorized"
+          )
+        );
       }
-      const user = await User.findById(payload.id);
-      if (user.refreshToken !== refreshToken) reject(createError.Unauthorized());
+      const userInDB = await User.findById(payload.id);
+      if (userInDB.refreshToken !== refreshToken) reject(createError.Unauthorized());
+
+      const { iat, exp, ...user } = payload;
 
       return resolve(user);
     });
   });
 };
-const setRefreshTokenCookie = async (res, refreshToken, maxAge =refreshTokenLifeTime) => {
+const setRefreshTokenCookie = async (res, refreshToken, maxAge = refreshTokenLifeTime) => {
   res.cookie("refreshToken", refreshToken, {
     maxAge,
     httpOnly: true,
   });
 };
-
-
 
 module.exports = {
   attemptLogin,
@@ -87,5 +96,5 @@ module.exports = {
   createRefreshToken,
   verifyRefreshToken,
   setRefreshTokenCookie,
-  accessTokenLifeTime
+  accessTokenLifeTime,
 };
