@@ -1,11 +1,20 @@
 const videosRouter = require("express").Router();
-const { index, show, getSuggestions, toggleLike, upload, toggleDislike } = require("../controllers/videoController");
+const {
+  index,
+  getTrending,
+  show,
+  getSuggestions,
+  toggleLike,
+  upload,
+  toggleDislike,
+} = require("../controllers/videoController");
 const streamController = require("../controllers/streamController");
 const checkAuth = require("../middlewares/checkAuth");
 const checkVideoId = require("../middlewares/checkVideoId");
 const commentsRouter = require("./comments");
 // Public
 videosRouter.get("/", index);
+videosRouter.get("/trending", getTrending);
 videosRouter.get("/stream/:filename", streamController.index);
 
 //Auth

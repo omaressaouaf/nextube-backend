@@ -49,15 +49,16 @@ const verifyAccessToken = accessToken => {
 const createRefreshToken = user => {
   return new Promise((resolve, reject) => {
     jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" }, async (err, token) => {
-      if (err) {
-        console.log(err.message);
+      try {
+        if (err) {
+          console.log(err.message);
+          return reject(createError.InternalServerError());
+        }
+        await User.findByIdAndUpdate(user.id, { refreshToken: token });
+        resolve(token);
+      } catch (err) {
         return reject(createError.InternalServerError());
       }
-      User.findByIdAndUpdate(user.id, { refreshToken: token }, err => {
-        if (err) return reject(createError.InternalServerError());
-
-        return resolve(token);
-      });
     });
   });
 };
@@ -65,20 +66,25 @@ const createRefreshToken = user => {
 const verifyRefreshToken = refreshToken => {
   return new Promise((resolve, reject) => {
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, payload) => {
-      if (err) {
-        console.log(err.message);
-        return reject(
-          createError.Unauthorized(
-            err.name === "TokenExpiredError" ? "refresh token expired" : "Unauthorized"
-          )
-        );
+      try {
+        if (err) {
+          console.log(err.message);
+          return reject(
+            createError.Unauthorized(
+              err.name === "TokenExpiredError" ? "refresh token expired" : "Unauthorized"
+            )
+          );
+        }
+        const userInDB = await User.findById(payload.id);
+
+        if (userInDB.refreshToken !== refreshToken) reject(createError.Unauthorized());
+
+        const { iat, exp, ...user } = payload;
+
+        return resolve(user);
+      } catch (err) {
+        return reject(createError.InternalServerError());
       }
-      const userInDB = await User.findById(payload.id);
-      if (userInDB.refreshToken !== refreshToken) reject(createError.Unauthorized());
-
-      const { iat, exp, ...user } = payload;
-
-      return resolve(user);
     });
   });
 };

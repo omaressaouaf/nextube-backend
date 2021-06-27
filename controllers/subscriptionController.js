@@ -15,12 +15,12 @@ module.exports = {
       next(err);
     }
   },
-  getSubscriptionsWithVideos: async (req, res, next) => {
+  getSubscriptionsVideos: async (req, res, next) => {
     try {
       const subscriptions = await Subscription.find({ subscriber: req.user.id });
       const subscribedToArray = subscriptions.map(subscription => subscription.subscribedTo);
 
-      const subscriptionsWithVideos = await Video.aggregate([
+      const subscriptionsVideos = await Video.aggregate([
         { $sort: { createdAt: 1 } },
         { $match: { user: { $in: subscribedToArray } } },
         {
@@ -38,7 +38,7 @@ module.exports = {
         },
       ]);
 
-      return res.json({ subscriptionsWithVideos });
+      return res.json({ subscriptionsVideos });
     } catch (err) {
       next(err);
     }

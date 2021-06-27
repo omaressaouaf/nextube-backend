@@ -11,6 +11,15 @@ module.exports = {
       next(err);
     }
   },
+  getTrending: async (req, res, next) => {
+    try {
+      const videos = await Video.find().sort({ viewsCount: "desc", likes: "desc" });
+
+      return res.json({ videos });
+    } catch (err) {
+      next(err);
+    }
+  },
 
   show: async (req, res, next) => {
     try {

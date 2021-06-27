@@ -24,14 +24,16 @@ module.exports = {
 
       let user = await authService.attemptLogin(email, password);
       user = user.toJSON();
-
       const accessToken = await authService.createAccessToken(user);
       const refreshToken = await authService.createRefreshToken(user);
       authService.setRefreshTokenCookie(res, refreshToken);
 
-      user.subscriptions = await Subscription.find({ subscriber: user.id }).populate(
-        "subscribedTo"
-      );
+      user.subscriptions = await Subscription.find({ subscriber: user.id }).populate({
+        path: "subscribedTo",
+        populate: {
+          path: "subscribersCount",
+        },
+      });
 
       return res.json({
         accessToken,
@@ -70,9 +72,12 @@ module.exports = {
       const newRefreshToken = await authService.createRefreshToken(user);
       authService.setRefreshTokenCookie(res, newRefreshToken);
 
-      user.subscriptions = await Subscription.find({ subscriber: user.id }).populate(
-        "subscribedTo"
-      );
+      user.subscriptions = await Subscription.find({ subscriber: user.id }).populate({
+        path: "subscribedTo",
+        populate: {
+          path: "subscribersCount",
+        },
+      });
       return res.json({
         accessToken: newAccessToken,
         accessTokenEndDate: Date.now() + authService.accessTokenLifeTime,

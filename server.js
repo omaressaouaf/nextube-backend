@@ -35,14 +35,13 @@ app.use((req, res, next) => {
   next(createError.NotFound());
 });
 app.use((err, _, res, next) => {
-  console.log(err);
+  console.log(err.message);
 
-  let status = err.status;
+  let status = err.status ?? 500;
 
   if (err.isJoi) status = 422; // Joi validation
   if (err.kind === "ObjectId") status = 404; //Mongo failed to convert given object id
   if (err.code == 11000) status = 409; //Duplicate Key
-  if (!err.status) status = 500;
 
   let message = err.message;
   if (status === 500) message = "Internal Server Error";

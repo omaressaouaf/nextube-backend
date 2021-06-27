@@ -1,14 +1,14 @@
 const subscriptionsRouter = require("express").Router();
 const {
   getSubscriptions,
-  getSubscriptionsWithVideos,
+  getSubscriptionsVideos,
   subscribe,
   unsubscribe,
 } = require("../controllers/subscriptionController");
 
 
 subscriptionsRouter.get("/", getSubscriptions);
-subscriptionsRouter.get("/videos", getSubscriptionsWithVideos);
+subscriptionsRouter.get("/videos", getSubscriptionsVideos);
 subscriptionsRouter.post("/subscribe/:userId", subscribe);
 subscriptionsRouter.delete("/unsubscribe/:userId", unsubscribe);
 
