@@ -6,9 +6,7 @@ const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const ffprobePath = require("@ffprobe-installer/ffprobe").path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
-const mongoose = require("mongoose");
 const Video = require("../models/video");
-const { db } = require("../models/video");
 
 const videoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -28,7 +26,11 @@ const videoFilter = async (req, file, cb) => {
   }
 };
 
-const uploadVideo = multer({ storage: videoStorage, fileFilter: videoFilter, limits: { fileSize: 1024 * 1024 * 11 } }).single("file");
+const uploadVideo = multer({
+  storage: videoStorage,
+  fileFilter: videoFilter,
+  limits: { fileSize: 1024 * 1024 * 11 },
+}).single("file");
 
 const handleUploadVideoErrors = err => {
   if (err instanceof multer.MulterError) {
@@ -42,11 +44,16 @@ const handleUploadVideoErrors = err => {
 const generateAndSaveThumbnail = filePath => {
   return new Promise((resolve, reject) => {
     let thumbnail = "";
+    let duration = "";
+    ffmpeg.ffprobe(filePath, function (err, metadata) {
+      if (err) resolve(createError.InternalServerError());
+      duration = metadata.format.duration;
+    });
     ffmpeg(filePath)
       .on("filenames", filenames => {
         thumbnail = `${process.env.APP_URL}/uploads/thumbnails/${filenames[0]}`;
       })
-      .on("end", () => resolve(thumbnail))
+      .on("end", () => resolve({ thumbnail, duration }))
       .on("error", err => reject(createError.InternalServerError()))
       .takeScreenshots(
         {
@@ -62,7 +69,8 @@ const generateAndSaveThumbnail = filePath => {
 const toggleFeeling = ({ videoId, authUser, feelings }) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (feelings !== "likes" && feelings !== "dislikes") console.error("feelings must be likes or dislikes");
+      if (feelings !== "likes" && feelings !== "dislikes")
+        console.error("feelings must be likes or dislikes");
 
       const oppositeFeelings = feelings === "likes" ? "dislikes" : "likes";
 

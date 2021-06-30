@@ -86,7 +86,7 @@ module.exports = {
         }
 
         const filename = req.file.filename;
-        const thumbnail = await videoService.generateAndSaveThumbnail(req.file.path);
+        const { thumbnail, duration } = await videoService.generateAndSaveThumbnail(req.file.path);
 
         const { title, tags, description } = req.body;
         const video = await Video.create({
@@ -95,6 +95,7 @@ module.exports = {
           description,
           filename,
           thumbnail,
+          duration,
           user: req.user.id,
         });
 

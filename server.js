@@ -8,6 +8,7 @@ const createError = require("http-errors");
 const authRouter = require("./routes/auth");
 const videosRouter = require("./routes/videos");
 const subscriptionsRouter = require("./routes/subscriptions");
+const historiesRouter = require("./routes/histories");
 const checkAuth = require("./middlewares/checkAuth");
 
 /* App setup */
@@ -29,6 +30,7 @@ initMongodb();
 app.use("/auth", authRouter);
 app.use("/videos", videosRouter);
 app.use("/subscriptions", checkAuth, subscriptionsRouter);
+app.use("/histories", checkAuth, historiesRouter);
 
 /* Catch middlewares for all routes  (Error handling) */
 app.use((req, res, next) => {
