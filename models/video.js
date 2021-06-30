@@ -27,6 +27,11 @@ const videoSchema = new Schema(
       type: Number,
       required: true,
     },
+    category: {
+      type: String,
+      enum: ["music", "gaming", "sports"],
+      required : false
+    },
     viewsCount: {
       type: Number,
       required: true,

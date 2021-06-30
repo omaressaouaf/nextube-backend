@@ -13,7 +13,11 @@ module.exports = {
   },
   getTrending: async (req, res, next) => {
     try {
-      const videos = await Video.find().sort({ viewsCount: "desc", likes: "desc" });
+      console.log(req.query.category)
+      const videos = await Video.find({ category: req.query.category }).sort({
+        viewsCount: "desc",
+        likes: "desc",
+      });
 
       return res.json({ videos });
     } catch (err) {
@@ -88,7 +92,7 @@ module.exports = {
         const filename = req.file.filename;
         const { thumbnail, duration } = await videoService.generateAndSaveThumbnail(req.file.path);
 
-        const { title, tags, description } = req.body;
+        const { title, tags, description, category } = req.body;
         const video = await Video.create({
           title,
           tags,
@@ -96,6 +100,7 @@ module.exports = {
           filename,
           thumbnail,
           duration,
+          category,
           user: req.user.id,
         });
 
