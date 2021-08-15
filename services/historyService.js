@@ -9,6 +9,7 @@ const getHistoriesPerDay = async (userId, videosIds = null) => {
         video: videosIds ? { $in: videosIds } : { $ne: null },
       },
     },
+    { $sort: { updatedAt: -1 } },
     {
       $project: {
         updatedAtDay: {

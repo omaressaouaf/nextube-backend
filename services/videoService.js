@@ -46,7 +46,7 @@ const generateAndSaveThumbnail = filePath => {
     let thumbnail = "";
     let duration = "";
     ffmpeg.ffprobe(filePath, function (err, metadata) {
-      if (err) resolve(createError.InternalServerError());
+      if (err) reject(createError.InternalServerError());
       duration = metadata.format.duration;
     });
     ffmpeg(filePath)
@@ -69,8 +69,9 @@ const generateAndSaveThumbnail = filePath => {
 const toggleFeeling = ({ videoId, authUser, feelings }) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (feelings !== "likes" && feelings !== "dislikes")
+      if (feelings !== "likes" && feelings !== "dislikes") {
         console.error("feelings must be likes or dislikes");
+      }
 
       const oppositeFeelings = feelings === "likes" ? "dislikes" : "likes";
 

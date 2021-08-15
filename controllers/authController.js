@@ -8,7 +8,8 @@ module.exports = {
   register: async (req, res, next) => {
     try {
       const { channelName, email, password } = await registerSchema.validateAsync(req.body);
-      if (await User.findOne({ email })) throw createError.Conflict("email is already used");
+      if (await User.findOne({ email })) throw createError.Conflict("Email is already used");
+      if (await User.findOne({ channelName })) throw createError.Conflict("Channel name is already used");
 
       const user = new User({ channelName, email, password });
       await user.save();

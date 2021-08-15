@@ -9,6 +9,8 @@ const authRouter = require("./routes/auth");
 const videosRouter = require("./routes/videos");
 const subscriptionsRouter = require("./routes/subscriptions");
 const historiesRouter = require("./routes/histories");
+const watchLatersRouter = require("./routes/watchLaters");
+const channelsRouter = require("./routes/channels");
 const checkAuth = require("./middlewares/checkAuth");
 
 /* App setup */
@@ -29,8 +31,11 @@ initMongodb();
 /* Routes */
 app.use("/auth", authRouter);
 app.use("/videos", videosRouter);
-app.use("/subscriptions", checkAuth, subscriptionsRouter);
-app.use("/histories", checkAuth, historiesRouter);
+app.use("/channels", channelsRouter);
+app.use("/", checkAuth);
+app.use("/subscriptions", subscriptionsRouter);
+app.use("/histories", historiesRouter);
+app.use("/watchlaters", watchLatersRouter);
 
 /* Catch middlewares for all routes  (Error handling) */
 app.use((req, res, next) => {
@@ -48,7 +53,7 @@ app.use((err, _, res, next) => {
   let message = err.message;
   if (status === 500) message = "Internal Server Error";
   if (status === 404) message = "Not Found";
-  if (status === 409) message = "Conflict";
+  // if (status === 409) message = "Conflict";
 
   res.status(status);
   res.send({ message });

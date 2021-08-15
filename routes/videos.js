@@ -1,6 +1,7 @@
 const videosRouter = require("express").Router();
 const {
   index,
+  search,
   getTrending,
   show,
   getSuggestions,
@@ -14,6 +15,7 @@ const checkVideoId = require("../middlewares/checkVideoId");
 const commentsRouter = require("./comments");
 // Public
 videosRouter.get("/", index);
+videosRouter.get("/search", search);
 videosRouter.get("/trending", getTrending);
 videosRouter.get("/stream/:filename", streamController.index);
 
