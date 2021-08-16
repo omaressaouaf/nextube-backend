@@ -6,7 +6,7 @@ module.exports = {
   show: async (req, res, next) => {
     try {
       const { channelName } = req.params;
-      const user = await User.findOne({ channelName }).populate('subscribersCount');
+      const user = await User.findOne({ channelName })
       if (!user) throw createError.NotFound();
       const videos = await Video.find({ user: user.id }).sort({ createdAt: "desc" });
 

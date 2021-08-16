@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
     channelName: {
       type: String,
       required: true,
+      unique: true,
     },
     email: {
       type: String,
@@ -17,15 +18,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    avatar : {
-      type : String ,
-      required : false,
-      default : "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"
+    avatar: {
+      type: String,
+      required: false,
+      default:
+        "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
     },
     refreshToken: {
       type: String,
       required: false,
-      default  : null
+      default: null,
     },
   },
   { timestamps: true }
@@ -33,20 +35,21 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre("save", async function (next) {
   try {
-    this.password = await bcrypt.hash(this.password, 10);
+    if (this.isNew) {
+      this.password = await bcrypt.hash(this.password, 10);
+    }
     next();
   } catch (err) {
     next(err);
   }
 });
 
-userSchema.virtual('subscribersCount' , {
-  ref : "Subscription",
-  localField : "_id",
-  foreignField : "subscribedTo",
-  count : true
-})
-
+userSchema.virtual("subscribersCount", {
+  ref: "Subscription",
+  localField: "_id",
+  foreignField: "subscribedTo",
+  count: true,
+});
 
 userSchema.set("toJSON", {
   virtuals: true,
@@ -57,6 +60,18 @@ userSchema.set("toJSON", {
     delete ret.refreshToken;
   },
 });
+
+const populateSubscribersCount = function (next) {
+  try {
+    this.populate("subscribersCount");
+    next();
+  } catch (err) {
+    console.log(`error populating subscribers count in user model : ${err}`);
+  }
+};
+
+userSchema.pre("findOne", populateSubscribersCount);
+userSchema.pre("find", populateSubscribersCount);
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 

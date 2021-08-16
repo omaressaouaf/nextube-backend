@@ -8,8 +8,8 @@ module.exports = {
   register: async (req, res, next) => {
     try {
       const { channelName, email, password } = await registerSchema.validateAsync(req.body);
-      if (await User.findOne({ email })) throw createError.Conflict("Email is already used");
-      if (await User.findOne({ channelName })) throw createError.Conflict("Channel name is already used");
+
+      await authService.checkUserExistence({channelName, email});
 
       const user = new User({ channelName, email, password });
       await user.save();
@@ -25,6 +25,7 @@ module.exports = {
 
       let user = await authService.attemptLogin(email, password);
       user = user.toJSON();
+
       const accessToken = await authService.createAccessToken(user);
       const refreshToken = await authService.createRefreshToken(user);
       authService.setRefreshTokenCookie(res, refreshToken);

@@ -17,6 +17,15 @@ const attemptLogin = async (email, password) => {
   return user;
 };
 
+const checkUserExistence = async ({ channelName, email, exceptUser }) => {
+  if (await User.findOne({ channelName: { $eq: channelName, $ne: exceptUser?.channelName } })) {
+    throw createError.Conflict("Channel name is already used");
+  }
+  if (await User.findOne({ email: { $eq: email, $ne: exceptUser?.email } })) {
+    throw createError.Conflict("Email is already used");
+  }
+};
+
 const createAccessToken = user => {
   return new Promise((resolve, reject) => {
     jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" }, (err, token) => {
@@ -97,6 +106,7 @@ const setRefreshTokenCookie = async (res, refreshToken, maxAge = refreshTokenLif
 
 module.exports = {
   attemptLogin,
+  checkUserExistence,
   createAccessToken,
   verifyAccessToken,
   createRefreshToken,

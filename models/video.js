@@ -30,7 +30,7 @@ const videoSchema = new Schema(
     category: {
       type: String,
       enum: ["music", "gaming", "sports"],
-      required : false
+      required: false,
     },
     viewsCount: {
       type: Number,
@@ -61,6 +61,7 @@ videoSchema.index({ title: "text", tags: "text", description: "text" });
 const populateUser = function (next) {
   try {
     this.populate("user");
+
     next();
   } catch (err) {
     console.log(`error populating user in video model : ${err}`);

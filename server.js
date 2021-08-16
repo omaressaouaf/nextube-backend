@@ -12,6 +12,7 @@ const historiesRouter = require("./routes/histories");
 const watchLatersRouter = require("./routes/watchLaters");
 const channelsRouter = require("./routes/channels");
 const checkAuth = require("./middlewares/checkAuth");
+const settingsRouter = require("./routes/settings");
 
 /* App setup */
 const app = express();
@@ -36,6 +37,7 @@ app.use("/", checkAuth);
 app.use("/subscriptions", subscriptionsRouter);
 app.use("/histories", historiesRouter);
 app.use("/watchlaters", watchLatersRouter);
+app.use("/settings", settingsRouter);
 
 /* Catch middlewares for all routes  (Error handling) */
 app.use((req, res, next) => {
