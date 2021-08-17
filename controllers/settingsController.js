@@ -2,6 +2,9 @@ const updateProfileSchema = require("../validation/updateProfileSchema");
 const User = require("../models/user");
 const authService = require("../services/authService");
 const Subscription = require("../models/subscription");
+const updatePasswordSchema = require("../validation/updatePasswordSchema");
+const bcrypt = require("bcryptjs");
+const createError = require("http-errors");
 
 module.exports = {
   updateProfile: async (req, res, next) => {
@@ -40,6 +43,14 @@ module.exports = {
   },
   updatePassword: async (req, res, next) => {
     try {
+      const { currentPassword, newPassword } = await updatePasswordSchema.validateAsync(req.body);
+      let user = await User.findById(req.user.id);
+
+      if (!(await bcrypt.compare(currentPassword, user.password))) {
+        throw createError.UnprocessableEntity("Current Password is incorrect");
+      }
+      user.password = await bcrypt.hash(newPassword, 10);
+      await user.save();
       return res.sendStatus(201);
     } catch (err) {
       next(err);
