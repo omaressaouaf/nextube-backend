@@ -1,6 +1,12 @@
 const Video = require("../models/video");
 const videoService = require("../services/videoService");
-const createError = require('http-errors')
+const createError = require("http-errors");
+const videoSchema = require("../validation/videoSchema");
+const { db } = require("../models/video");
+const History = require("../models/history");
+const WatchLater = require("../models/watchLater");
+const Comment = require("../models/comment");
+const fs = require("fs");
 
 module.exports = {
   index: async (req, res, next) => {
@@ -124,5 +130,48 @@ module.exports = {
         next(err);
       }
     });
+  },
+  getStudioVideos: async (req, res, next) => {
+    try {
+      const videos = await Video.find({ user: req.user.id }).sort({ createdAt: "desc" });
+
+      return res.json({ videos });
+    } catch (err) {
+      next(err);
+    }
+  },
+  updateVideo: async (req, res, next) => {
+    try {
+      if (req.video.user._id != req.user.id) throw createError.Forbidden();
+
+      const { title, tags, description, category } = await videoSchema.validateAsync(req.body);
+
+      await Video.findByIdAndUpdate(req.video.id, { title, tags, description, category });
+
+      return res.sendStatus(204);
+    } catch (err) {
+      next(err);
+    }
+  },
+  deleteVideo: async (req, res, next) => {
+    try {
+      if (req.video.user._id != req.user.id) throw createError.Forbidden();
+
+      db.transaction(async session => {
+        await History.deleteMany({ video: req.video.id }, { session });
+        await WatchLater.deleteMany({ video: req.video.id }, { session });
+        await Comment.deleteMany({ video: req.video.id }, { session });
+
+        await Video.findByIdAndDelete(req.video.id, { session });
+
+        const fileNamePath = "uploads/videos/" + req.video.filename;
+        if (fs.existsSync(fileNamePath)) {
+          fs.unlinkSync(fileNamePath);
+        }
+      });
+      return res.sendStatus(204);
+    } catch (err) {
+      next(err);
+    }
   },
 };

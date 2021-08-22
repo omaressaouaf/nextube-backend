@@ -1,5 +1,5 @@
 const multer = require("multer");
-const uploadSchema = require("../validation/uploadSchema");
+const videoSchema = require("../validation/videoSchema");
 const createError = require("http-errors");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
@@ -19,7 +19,7 @@ const videoStorage = multer.diskStorage({
 const videoFilter = async (req, file, cb) => {
   if (file.mimetype !== "video/mp4") cb(new Error("Only mp4 files are allowed"), false);
   try {
-    await uploadSchema.validateAsync(req.body);
+    await videoSchema.validateAsync(req.body);
     cb(null, true);
   } catch (err) {
     cb(err, false);
